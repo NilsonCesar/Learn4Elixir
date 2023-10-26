@@ -382,7 +382,19 @@ Para completar esta tarefa, você precisará usar estruturas condicionais, como 
 ```elixir
 defmodule ElixGames.Encontro do
   def determina_encontro(localizacao, probabilidade) do
-    # Implemente a lógica de determinação do resultado do encontro aqui
+    cond do
+      localizacao == "Bosque Encantado" && probabilidade <= 90 ->
+        "Criatura amigável"
+
+      localizacao == "Caverna Escura" && probabilidade <= 60 ->
+        "Criatura amigável"
+
+      localizacao == "Torre Misteriosa" && probabilidade <= 30 ->
+        "Criatura amigável"
+
+      true ->
+        "Criatura hostil"
+    end
   end
 end
 ```
@@ -413,37 +425,58 @@ A seguir está um exemplo de como as informações dos clientes estão atualment
 1. Crie uma função chamada `parsear_clientes/1` que receba a string de informações de clientes e a divida em uma lista de informações de clientes formatadas. Use o sigil `~s` para fazer isso.
 
 ```elixir
-def parsear_clientes(informacao) do
-  # A fazer
+defmodule Parser do
+  def parsear_clientes(informacao) do
+    rgClientes = ~r/;/
+    rgCliente = ~r/,/
+    clientes = Regex.split(rgClientes, informacao)
+    clientesNaoFormatados = for cliente <- clientes, do: Regex.split(rgCliente, cliente)
+
+    for [nome, idade, email, numero] <- clientesNaoFormatados,
+        do: [nome, String.to_integer(idade), email, numero]
+  end
 end
 ```
 
 ```elixir
-
+Parser.parsear_clientes(
+  "Fulano Tal,30,fulano@email.com,+5511995236587;Ciclano Outro,25,ciclano@email.com,5545996578452"
+)
 ```
 
 1. Crie outra função chamada `extrair_nomes/1` que receba a lista de informações de clientes e retorne uma lista com os nomes dos clientes.
 
 ```elixir
-def extrair_nomes(clientes) do
-  # A fazer
+defmodule ExtrairNome do
+  def extrair_nomes(clientes) do
+    listaClientes = Parser.parsear_clientes(clientes)
+    for [nome | _] <- listaClientes, do: nome
+  end
 end
 ```
 
 ```elixir
-# Caso a entrada fosse o exemplo na descrição deve imprimir ["Fulano Tal", "Ciclano Outro"]
+ExtrairNome.extrair_nomes(
+  "Fulano Tal,30,fulano@email.com,+5511995236587;Ciclano Outro,25,ciclano@email.com,5545996578452"
+)
 ```
 
 1. Crie uma terceira função chamada `filtrar_clientes_por_idade/2` que receba a lista de informações de clientes e uma idade mínima e retorne uma lista com as informações dos clientes que têm pelo menos a idade especificada.
 
 ```elixir
-def filtrar_clientes_por_idade(clientes, idade_minima) do
-  # A fazer
+defmodule FiltradorClientes do
+  def filtrar_clientes_por_idade(clientes, idade_minima) do
+    listaClientes = Parser.parsear_clientes(clientes)
+    for cliente = [_, idade | _] <- listaClientes, idade >= idade_minima, do: cliente
+  end
 end
 ```
 
 ```elixir
-# Deveria imprimir [["Fulano Tal", 30, "fulano@email.com", "+5511995236587"]]
+FiltradorClientes.filtrar_clientes_por_idade(
+  "Fulano Tal,30,fulano@email.com,+5511995236587;Ciclano Outro,25,ciclano@email.com,5545996578452",
+  10
+)
 ```
 
 ### Exercicio 3
@@ -477,6 +510,57 @@ calcula_total(produtos, cliente) # deve retornar 243.00
 
 ```elixir
 defmodule Ecommerce do
-  # A fazer
+  def calcula_total(produtos, cliente) do
+    valor_total =
+      Enum.sum(for produto <- produtos, do: produto.preco * produto.quantidade)
+
+    valor_total
+    |> checa_desconto_valor()
+    |> checa_membro(cliente)
+    |> checa_cupom(cliente)
+  end
+
+  defp checa_membro(valor, cliente) do
+    if cliente.membro_clube do
+      valor * 0.95
+    end
+  end
+
+  defp checa_cupom(valor, cliente) do
+    if cliente.cupom == "UBL10" do
+      valor * 0.9
+    end
+  end
+
+  defp checa_desconto_valor(valor) do
+    cond do
+      valor > 1000 ->
+        valor * 0.8
+
+      valor > 500 ->
+        valor * 0.85
+
+      valor > 200 ->
+        valor * 0.9
+
+      true ->
+        valor
+    end
+  end
 end
+```
+
+```elixir
+produtos = [
+  %{nome: "Ração para gatos", preco: 50.00, quantidade: 2},
+  %{nome: "Brinquedo para cachorro", preco: 30.00, quantidade: 1},
+  %{nome: "Aquário", preco: 200.00, quantidade: 1}
+]
+
+cliente = %{
+  membro_clube: true,
+  cupom: "UBL10"
+}
+
+Ecommerce.calcula_total(produtos, cliente)
 ```
