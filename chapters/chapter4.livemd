@@ -263,7 +263,46 @@ Vamos criar um sistema simples para rastrear o número de acessos a uma página 
 Escreva sua solução na célula abaixo. Se necessário, crie mais células.
 
 ```elixir
-"Coloque aqui sua solução"
+defmodule Acesso do
+  def inicia do
+    {:ok, agent} = Agent.start(fn -> [] end)
+    agent
+  end
+
+  def registrar_acesso(agent) do
+    {:ok, date} = DateTime.now("Etc/UTC")
+    Agent.update(agent, fn state -> state ++ [{date, date.hour}] end)
+  end
+
+  def obter_acessos(agent) do
+    Agent.get(agent, fn state -> state end)
+  end
+end
+```
+
+```elixir
+test = Acesso.inicia()
+Acesso.registrar_acesso(test)
+```
+
+```elixir
+Acesso.registrar_acesso(test)
+Process.alive?(test)
+```
+
+```elixir
+Acesso.registrar_acesso(test)
+Acesso.obter_acessos(test)
+```
+
+```elixir
+Acesso.registrar_acesso(test)
+Acesso.obter_acessos(test)
+```
+
+```elixir
+Agent.stop(test)
+Process.alive?(test)
 ```
 
 ## Exercício 2
@@ -285,7 +324,47 @@ Considere o caso em que a data de nascimento fornecida está no futuro em relaç
 Este exercício permitirá que você pratique a manipulação de datas em Elixir, incluindo o cálculo de anos bissextos, a diferença entre datas e a formatação dos resultados.
 
 ```elixir
-def calcular_idade(data_aniversario) do
-  # Escreva aqui a sua solução
+defmodule CalculaIdade do
+  def calcular_idade(data_aniversario) do
+    {ano, mes, dia} = data_aniversario
+    {:ok, data_agora} = DateTime.now("Etc/UTC")
+
+    data_aniversario_dt = %DateTime{
+      year: ano,
+      month: mes,
+      day: dia,
+      hour: data_agora.hour,
+      minute: data_agora.minute,
+      second: data_agora.second,
+      time_zone: data_agora.time_zone,
+      zone_abbr: data_agora.zone_abbr,
+      utc_offset: data_agora.utc_offset,
+      std_offset: data_agora.std_offset
+    }
+
+    diferenca = DateTime.diff(data_agora, data_aniversario_dt)
+
+    cond do
+      diferenca < 0 ->
+        "Data invalida, a não ser que você seja um viajante no futuro. Caso seja o caso, espere uma atualização futura que lidará com esse problema..."
+
+      diferenca == 0 ->
+        "Você acabou de nascer! Parabéns, por mais que você não me entenda!"
+
+      diferenca > 0 && data_aniversario_dt.day == data_agora.day &&
+          data_aniversario_dt.month == data_agora.month ->
+        "Hoje você completa #{data_agora.year - data_aniversario_dt.year} anos, parabéns pelo aniversário!"
+
+      data_aniversario_dt.month < data_agora.month ->
+        "#{data_agora.year - data_aniversario_dt.year} anos"
+
+      data_aniversario_dt.month >= data_agora.month ->
+        "#{data_agora.year - data_aniversario_dt.year - 1} anos"
+    end
+  end
 end
+```
+
+```elixir
+CalculaIdade.calcular_idade({2002, 11, 01})
 ```
